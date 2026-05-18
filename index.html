@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Banking Mains</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body{
+    background:#0f172a;
+    color:white;
+    padding:15px;
+    min-height:100vh;
+}
+
+/* HEADER */
+.header{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.header h1{
+    font-size:30px;
+    background:linear-gradient(90deg,#60a5fa,#8b5cf6);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.header p{
+    color:#94a3b8;
+    margin-top:8px;
+    font-size:14px;
+}
+
+/* FOLDER GRID */
+.folder-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+/* FOLDER CARD */
+.folder-card{
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:14px;
+    overflow:hidden;
+    transition: 0.2s ease;
+    backdrop-filter:blur(8px);
+    cursor:pointer;
+}
+
+.folder-card:active {
+    transform: scale(0.97);
+    background:rgba(255,255,255,0.1);
+}
+
+.folder-header{
+    padding:20px 14px;
+    text-align: center;
+}
+
+.folder-icon {
+    font-size: 40px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.folder-name{
+    font-size:14px;
+    font-weight:bold;
+    line-height:1.3;
+    word-break:break-word;
+    margin-bottom: 8px;
+}
+
+.folder-count{
+    display: inline-block;
+    background:#6366f1;
+    color: white;
+    padding:3px 10px;
+    border-radius:12px;
+    font-size:11px;
+}
+
+/* FULL SCREEN MOBILE FILE VIEWER (OVERLAY) */
+.folder-overlay {
+    position: fixed;
+    inset: 0;
+    background: #0f172a;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.folder-overlay.open {
+    transform: translateY(0);
+}
+
+.overlay-header {
+    display: flex;
+    align-items: center;
+    padding: 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.02);
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: 15px;
+}
+
+.overlay-title {
+    font-size: 18px;
+    font-weight: bold;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.overlay-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+/* FILE ITEM INSIDE OVERLAY */
+.file-item{
+    padding: 16px 20px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    cursor:pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-item:active{
+    background:rgba(99,102,241,0.2);
+}
+
+.file-title{
+    font-size:15px;
+    line-height:1.4;
+    color: #e2e8f0;
+}
+
+/* LOADER */
+.loader-overlay{
+    position:fixed;
+    inset:0;
+    background:#0f172a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:99999;
+    transition: opacity 0.25s ease;
+}
+
+.loader-overlay.hide{
+    opacity:0;
+    pointer-events:none;
+}
+
+.loader{
+    width:55px;
+    height:55px;
+    border:6px solid rgba(255,255,255,0.1);
+    border-top:6px solid #6366f1;
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+}
+
+@keyframes spin{
+    100%{ transform:rotate(360deg); }
+}
+
+.empty{
+    text-align:center;
+    color:#94a3b8;
+    margin-top:50px;
+    font-size:16px;
+    grid-column: 1 / -1;
+}
+
+/* MOBILE VIEWPORTS */
+@media(max-width:400px){
+    .folder-grid{
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    body { padding: 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader-overlay" id="loader">
+    <div class="loader"></div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+    <h1>Banking Mains</h1>
+    <h4>Reasoning Mains Level Questions Collection</h4>
+</div>
+
+<!-- FOLDERS GRID -->
+<div class="folder-grid" id="folderGrid"></div>
+
+<!-- FULL SCREEN FILE OVERLAY -->
+<div class="folder-overlay" id="folderOverlay">
+    <div class="overlay-header">
+        <button class="back-btn" onclick="closeFolder()">← Back</button>
+        <div class="overlay-title" id="overlayTitle">Folder Name</div>
+    </div>
+    <div class="overlay-content" id="overlayContent">
+        <!-- Files will dynamically load here -->
+    </div>
+</div>
+
+<script>
+/*
+====================================================
+ADD YOUR DETAILS
+====================================================
+*/
+const username = "officialappaarav-spec";
+const repo = "folders-test";
+
+let globalFolders = {}; // Store data globally to read when clicked
+
+/*
+====================================================
+LOADER CONTROLLER (FIXES BACK-BUTTON FREEZE)
+====================================================
+*/
+function hideLoader() {
+    document.getElementById("loader").classList.add("hide");
+}
+
+function showLoader() {
+    document.getElementById("loader").classList.remove("hide");
+}
+
+window.addEventListener("load", () => {
+    setTimeout(hideLoader, 400);
+});
+
+// Fixes the infinite spinning wheel when returning via browser back button
+window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+        hideLoader();
+    }
+});
+
+/*
+====================================================
+TEXT UTILITIES
+====================================================
+*/
+function getCategory(fileName){
+    return fileName.replace(/\s\d+\.html$/i,"").trim();
+}
+
+function getNumber(fileName){
+    const match = fileName.match(/(\d+)(?=\.html)/i);
+    return match ? parseInt(match[1]) : 0;
+}
+
+/*
+====================================================
+LOAD DATA FROM GITHUB
+====================================================
+*/
+async function loadFiles(){
+    try{
+        const response = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/`);
+        if(!response.ok) throw new Error("Network error");
+        
+        const data = await response.json();
+        const files = data
+            .filter(file => file.name.endsWith(".html") && file.name.toLowerCase() !== "index.html")
+            .map(file => file.name);
+
+        createFolders(files);
+    }catch(error){
+        console.error(error);
+        document.getElementById("folderGrid").innerHTML = `
+            <div class="empty">Failed To Load Files. Check Repository configurations.</div>
+        `;
+    }
+}
+
+function createFolders(files){
+    globalFolders = {};
+
+    files.forEach(file => {
+        const category = getCategory(file);
+        if(!globalFolders[category]) globalFolders[category] = [];
+        globalFolders[category].push(file);
+    });
+
+    // Sort Descending
+    Object.keys(globalFolders).forEach(category => {
+        globalFolders[category].sort((a,b) => getNumber(b) - getNumber(a));
+    });
+
+    renderFolders(globalFolders);
+}
+
+/*
+====================================================
+RENDER MAIN GRID
+====================================================
+*/
+function renderFolders(folders){
+    const folderGrid = document.getElementById("folderGrid");
+    folderGrid.innerHTML = "";
+
+    Object.keys(folders).forEach((category) => {
+        const folder = document.createElement("div");
+        folder.className = "folder-card";
+        // Passing category string safely via base64 encoding to prevent quote syntax breakage
+        const safeCategory = btoa(unescape(encodeURIComponent(category)));
+        
+        folder.setAttribute("onclick", `openFolder('${safeCategory}')`);
+        folder.innerHTML = `
+            <div class="folder-header">
+                <span class="folder-icon">📁</span>
+                <div class="folder-name">${category}</div>
+                <div class="folder-count">${folders[category].length} Sets</div>
+            </div>
+        `;
+        folderGrid.appendChild(folder);
+    });
+}
+
+/*
+====================================================
+OPEN OVERLAY VIEW (INSTEAD OF ACCORDION)
+====================================================
+*/
+function openFolder(encodedCategory) {
+    const category = decodeURIComponent(escape(atob(encodedCategory)));
+    const files = globalFolders[category];
+    
+    document.getElementById("overlayTitle").innerText = `📁 ${category}`;
+    
+    const contentContainer = document.getElementById("overlayContent");
+    contentContainer.innerHTML = files.map(file => `
+        <div class="file-item" onclick="openFile('${file}')">
+            <span>📄</span>
+            <div class="file-title">${file.replace(".html","")}</div>
+        </div>
+    `).join("");
+    
+    document.getElementById("folderOverlay").classList.add("open");
+}
+
+function closeFolder() {
+    document.getElementById("folderOverlay").classList.remove("open");
+}
+
+/*
+====================================================
+NAVIGATION
+====================================================
+*/
+function openFile(file){
+    showLoader();
+    setTimeout(() => {
+        window.location.href = file;
+    }, 200);
+}
+
+// Initialize Application
+loadFiles();
+</script>
+</body>
+</html>
